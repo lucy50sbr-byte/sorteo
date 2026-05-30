@@ -6,13 +6,16 @@
     <title>Sorteos Premium | Adquirí tus chances</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
 
     <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-black tracking-wider text-gold">GOLDEN LOOP</h1>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-black tracking-wider text-gold">GOLDEN LOOP</h1>
+            </div>
             <div class="flex items-center gap-4">
                 <div id="authSection">
                     <button onclick="abrirAuth()" class="text-slate-300 hover:text-white text-sm font-semibold transition">Registrarse / Entrar</button>
@@ -286,6 +289,7 @@
                         </div>
                         <textarea id="adminImagen" placeholder="URLs de las Imágenes (una por línea o separadas por coma)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500 h-24"></textarea>
                         <input type="datetime-local" id="adminFecha" required class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500">
+                        <input type="url" id="adminLinkVivo" placeholder="Link del Vivo (YouTube/Instagram)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500 text-white">
                         <label class="flex items-center gap-2 text-sm text-slate-400 cursor-pointer">
                             <input type="checkbox" id="adminActivo" checked class="accent-amber-500"> Sorteo Activo
                         </label>
@@ -322,7 +326,6 @@
                             <label class="cursor-pointer">
                                 <span class="text-xs text-slate-500 font-bold uppercase block mb-2">Foto con el premio</span>
                                 <input type="file" id="winnerFotoInput" accept="image/*" class="hidden" onchange="previewWinnerImage(this)">
-                                <div id="winnerPhotoPreview" class="text-amber-500 text-xs font-bold hover:underline">Seleccionar archivo</div>
                                 <div id="winnerPhotoPreview" class="text-amber-500 text-xs font-bold hover:underline flex items-center justify-center min-h-[40px]">Seleccionar archivo</div>
                             </label>
                         </div>

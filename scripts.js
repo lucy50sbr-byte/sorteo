@@ -125,11 +125,17 @@ async function cargarInfoPublica() {
                 </div>
 
                 <!-- Countdown Individual -->
-                <div class="grid grid-cols-4 gap-2 md:gap-4 max-w-md mx-auto mt-10 bg-slate-900 p-4 rounded-2xl border border-slate-800 countdown-wrapper" data-deadline="${sorteo.fecha_sorteo}">
+                <div class="grid grid-cols-4 gap-2 md:gap-4 max-w-md mx-auto mt-10 bg-slate-900 p-4 rounded-2xl border border-slate-800 countdown-wrapper" data-deadline="${sorteo.fecha_sorteo}" data-linkvivo="${sorteo.link_vivo || ''}">
                     <div class="p-2"><span class="days text-3xl font-bold text-amber-400 block">00</span><span class="text-xs text-slate-500 uppercase">Días</span></div>
                     <div class="p-2"><span class="hours text-3xl font-bold text-amber-400 block">00</span><span class="text-xs text-slate-500 uppercase">Horas</span></div>
                     <div class="p-2"><span class="minutes text-3xl font-bold text-amber-400 block">00</span><span class="text-xs text-slate-500 uppercase">Min</span></div>
                     <div class="p-2"><span class="seconds text-3xl font-bold text-amber-400 block">00</span><span class="text-xs text-slate-500 uppercase">Seg</span></div>
+                </div>
+
+                <div class="live-btn-container mt-6 hidden">
+                    <a href="${sorteo.link_vivo || '#'}" target="_blank" class="bg-red-600 text-white font-bold px-8 py-3 rounded-xl hover:opacity-90 transition animate-pulse inline-block uppercase tracking-wider text-sm shadow-lg shadow-red-600/20">
+                        🔴 Ver sorteo en vivo
+                    </a>
                 </div>
 
                 <button onclick="seleccionarYComprar('${sorteo.id}')" class="mt-8 bg-gold text-slate-950 font-bold px-8 py-3 rounded-xl hover:opacity-90 transition">
@@ -193,15 +199,34 @@ cargarGanadores();
 
 // Cuenta regresiva dinámica
 setInterval(() => {
+    const ahora = new Date().getTime();
+
     document.querySelectorAll('.countdown-wrapper').forEach(wrapper => {
         const deadlineStr = wrapper.getAttribute('data-deadline');
         if (!deadlineStr) return;
         
+        const card = wrapper.closest('.raffle-card');
+        const localLiveBtn = card?.querySelector('.live-btn-container');
+        
         const deadline = new Date(deadlineStr).getTime();
-        const ahora = new Date().getTime();
         const diferencia = deadline - ahora;
         
         if (diferencia > 0) {
+            // Si falta menos de 4 horas (14,400,000 ms)
+            if (diferencia <= 14400000) {
+                const link = wrapper.getAttribute('data-linkvivo');
+                if (link && link.trim() !== "" && link !== "#") {
+                    // Mostrar botón en la tarjeta específica
+                    if (localLiveBtn) {
+                        localLiveBtn.classList.remove('hidden');
+                        const anchor = localLiveBtn.querySelector('a');
+                        if (anchor) anchor.href = link;
+                    }
+                }
+            } else {
+                if (localLiveBtn) localLiveBtn.classList.add('hidden');
+            }
+
             wrapper.querySelector('.days').innerText = Math.floor(diferencia / (1000 * 60 * 60 * 24)).toString().padStart(2, '0');
             wrapper.querySelector('.hours').innerText = Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
             wrapper.querySelector('.minutes').innerText = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
@@ -211,6 +236,8 @@ setInterval(() => {
             wrapper.querySelector('.hours').innerText = "00";
             wrapper.querySelector('.minutes').innerText = "00";
             wrapper.querySelector('.seconds').innerText = "00";
+
+            if (localLiveBtn) localLiveBtn.classList.add('hidden');
 
             // Desaparecer el sorteo de la página con una transición
             const card = wrapper.closest('.raffle-card');
@@ -477,13 +504,19 @@ async function subirComprobante(compraId, input) {
 window.abrirImagenModal = function(url) {
     const modal = document.getElementById('imageModal');
     const img = document.getElementById('imgVisualizada');
-    if (img) img.src = obtenerUrlDirecta(url);
-    if (modal) modal.style.display = 'flex';
+    if (img && url) img.src = obtenerUrlDirecta(url);
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
 }
 
 window.cerrarImagenModal = function() {
     const modal = document.getElementById('imageModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
 }
 
 // --- LÓGICA DE ADMINISTRACIÓN ---
@@ -557,21 +590,25 @@ async function cargarVentasAdmin() {
 async function gestionarVenta(compraId, nuevoEstado) {
     const accion = nuevoEstado === 1 ? 'Aprobar' : 'Rechazar';
     const confirmMsg = nuevoEstado === 1 ? `¿Aprobar compra?` : `¿Rechazar compra? Se liberarán los números pero el comprobante permanecerá visible para revisión.`;
+    const idNum = parseInt(compraId);
     
     if (!confirm(confirmMsg)) return;
 
     // 1. Actualizar el estado de la compra
     const updateData = { estado_pago: nuevoEstado };
 
-    const { error } = await supabaseClient.from('compras').update(updateData).eq('id', compraId);
+    const { error } = await supabaseClient.from('compras').update(updateData).eq('id', idNum);
     if (error) {
-        alert("Error: " + error.message);
+        alert("Error al actualizar estado: " + error.message);
         return;
     }
 
     // 2. Si se rechaza, liberar números
     if (nuevoEstado === 2) {
-        await supabaseClient.from('numeros_asignados').delete().eq('compra_id', compraId);
+        const { error: delError } = await supabaseClient.from('numeros_asignados').delete().eq('compra_id', idNum);
+        if (delError) {
+            alert("Compra rechazada, pero hubo un error liberando los números: " + delError.message);
+        }
     }
 
     alert(`Compra ${accion}da con éxito.`);
@@ -693,6 +730,7 @@ window.prepararEdicionSorteo = function(id) {
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     document.getElementById('adminFecha').value = d.toISOString().slice(0, 16);
     document.getElementById('adminActivo').checked = s.activo;
+    document.getElementById('adminLinkVivo').value = s.link_vivo || '';
     document.getElementById('adminFormTitle').innerText = "Editando Sorteo";
 }
 
@@ -712,7 +750,8 @@ document.getElementById('formSorteo').addEventListener('submit', async (e) => {
         min_numero: parseInt(document.getElementById('adminMinNum').value || 0),
         max_numero: parseInt(document.getElementById('adminMaxNum').value || 9999),
         fecha_sorteo: fechaISO,
-        activo: document.getElementById('adminActivo').checked
+        activo: document.getElementById('adminActivo').checked,
+        link_vivo: document.getElementById('adminLinkVivo').value
     };
 
     let error;
@@ -1073,7 +1112,7 @@ document.getElementById('formCompra').addEventListener('submit', async (e) => {
     const { data: compra, error } = await supabaseClient
         .from('compras')
         .insert([{ 
-            sorteo_id: SORTEO_ACTIVO_ID, 
+            sorteo_id: parseInt(SORTEO_ACTIVO_ID), 
             user_id: user ? user.id : null, // <--- Enviamos el ID del usuario
             nombre, 
             apellido, 
@@ -1109,20 +1148,26 @@ document.getElementById('formCompra').addEventListener('submit', async (e) => {
         return;
     }
 
-    const listaNumeros = numeros.map(n => n.numero_asignado).join(', ');
+    const listaNumeros = numeros.map(n => n.numero_rifa).join(', ');
 
     // Redirección o aviso para el pago manual
-    alert(`¡Registro Exitoso!\n\nTus números asignados son: ${listaNumeros}\n\nPor favor, enviá tu comprobante vía WhatsApp para confirmar.`);
+    alert(`¡Registro Exitoso!\n\nTus números asignados son: ${listaNumeros}\n\nAhora podrás subir tu comprobante en la sección 'Mis Compras' que se abrirá a continuación.`);
     
-    // Aquí podés redirigir al link de WhatsApp con un mensaje personalizado:
-    const msg = encodeURIComponent(`Hola! Registré mi compra (${cantidad} chances) a nombre de ${nombre} ${apellido}.\nMis números son: ${listaNumeros}.\nTe pasare el comprobante`);
-    window.location.href = `https://wa.me/${MI_NUMERO_WHATSAPP}?text=${msg}`;
+    // Limpiamos el formulario y cerramos el modal
+    btn.innerText = "Confirmar Pedido";
+    btn.disabled = false;
+    cerrarModal();
+    e.target.reset();
+
+    // Abrimos automáticamente "Mis Compras" para facilitar el proceso de subida de comprobante
+    abrirMisCompras();
 });
 
 // --- LÓGICA DE LA RULETA ---
 let participantesRuleta = [];
 let ruletaAnguloActual = 0;
 let ruletaGirando = false;
+const sonidoRuleta = new Audio('ruleta.mp3'); // Asegúrate de que el archivo se llame así en tu carpeta
 
 async function cargarSorteosParaRuleta() {
     const select = document.getElementById('ruletaSorteoSelect');
@@ -1191,6 +1236,14 @@ async function prepararParticipantesRuleta() {
         nombre: `${item.compras.nombre} ${item.compras.apellido}`
     }));
 
+    // Generar una paleta de colores única por cada nombre de comprador
+    const nombresUnicos = [...new Set(participantesRuleta.map(p => p.nombre))];
+    const paletaColores = nombresUnicos.reduce((acc, nombre, i) => {
+        acc[nombre] = `hsl(${(i * 360) / nombresUnicos.length}, 75%, 50%)`;
+        return acc;
+    }, {});
+    participantesRuleta.forEach(p => p.color = paletaColores[p.nombre]);
+
     stats.innerText = `${participantesRuleta.length} Números cargados para el sorteo`;
     btn.disabled = false;
     dibujarRuleta();
@@ -1217,7 +1270,7 @@ function dibujarRuleta() {
     participantesRuleta.forEach((p, i) => {
         const angulo = ruletaAnguloActual + (i * arcSize);
         
-        ctx.fillStyle = `hsl(${(i * 360) / total}, 70%, 50%)`;
+        ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.moveTo(center, center);
         ctx.arc(center, center, center - 10, angulo, angulo + arcSize);
@@ -1243,22 +1296,35 @@ window.girarRuleta = function() {
     ruletaGirando = true;
     document.getElementById('resultadoRuleta').innerText = "¡Sorteando!";
     
-    let velocidad = 0.5 + Math.random() * 0.5;
-    let friccion = 0.985;
+    // Reproducir sonido
+    sonidoRuleta.currentTime = 0;
+    sonidoRuleta.play().catch(e => console.warn("El audio no pudo reproducirse:", e));
+
+    const duracion = 7000; // 7 segundos exactos
+    const inicio = performance.now();
+    const anguloInicial = ruletaAnguloActual;
     
-    function animar() {
-        if (velocidad < 0.001) {
+    // Calculamos cuántas vueltas dará (mínimo 10 vueltas + un extra aleatorio)
+    const vueltasTotales = (10 + Math.random() * 5) * (Math.PI * 2);
+
+    function animar(tiempoActual) {
+        const transcurrido = tiempoActual - inicio;
+        const progreso = Math.min(transcurrido / duracion, 1);
+
+        // Función de easing (Cubic Out) para un frenado suave al final
+        const easing = 1 - Math.pow(1 - progreso, 3);
+        
+        ruletaAnguloActual = anguloInicial + (vueltasTotales * easing);
+        dibujarRuleta();
+
+        if (progreso < 1) {
+            requestAnimationFrame(animar);
+        } else {
             ruletaGirando = false;
             finalizarSorteoRuleta();
-            return;
         }
-        
-        ruletaAnguloActual += velocidad;
-        velocidad *= friccion;
-        dibujarRuleta();
-        requestAnimationFrame(animar);
     }
-    animar();
+    requestAnimationFrame(animar);
 }
 
 function finalizarSorteoRuleta() {
@@ -1279,5 +1345,12 @@ function finalizarSorteoRuleta() {
     
     const ganador = participantesRuleta[indiceGanador];
     document.getElementById('resultadoRuleta').innerText = `N° ${ganador.numero} - ${ganador.nombre}`;
-    alert(`¡FELICITACIONES!\nGanador: ${ganador.nombre}\nNúmero: ${ganador.numero}`);
+
+    // Lanzar confeti en lugar del alert
+    confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#f59e0b', '#fbbf24', '#ffffff'] // Colores dorados y blanco para combinar con el sitio
+    });
 }
