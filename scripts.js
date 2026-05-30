@@ -1168,6 +1168,7 @@ let participantesRuleta = [];
 let ruletaAnguloActual = 0;
 let ruletaGirando = false;
 const sonidoRuleta = new Audio('ruleta.mp3'); // Asegúrate de que el archivo se llame así en tu carpeta
+const sonidoGanador = new Audio('ganador.mp3');
 
 async function cargarSorteosParaRuleta() {
     const select = document.getElementById('ruletaSorteoSelect');
@@ -1290,7 +1291,7 @@ function dibujarRuleta() {
     });
 }
 
-window.girarRuleta = function() {
+window.girarRuleta = async function() {
     if (ruletaGirando || participantesRuleta.length === 0) return;
     
     ruletaGirando = true;
@@ -1298,7 +1299,11 @@ window.girarRuleta = function() {
     
     // Reproducir sonido
     sonidoRuleta.currentTime = 0;
-    sonidoRuleta.play().catch(e => console.warn("El audio no pudo reproducirse:", e));
+    try {
+        await sonidoRuleta.play();
+    } catch (e) {
+        console.warn("El audio no pudo reproducirse:", e);
+    }
 
     const duracion = 7000; // 7 segundos exactos
     const inicio = performance.now();
@@ -1345,6 +1350,10 @@ function finalizarSorteoRuleta() {
     
     const ganador = participantesRuleta[indiceGanador];
     document.getElementById('resultadoRuleta').innerText = `N° ${ganador.numero} - ${ganador.nombre}`;
+
+    // Reproducir sonido de ganador
+    sonidoGanador.currentTime = 0;
+    sonidoGanador.play().catch(e => console.warn("No se pudo reproducir el sonido de ganador:", e));
 
     // Lanzar confeti en lugar del alert
     confetti({
