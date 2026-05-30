@@ -1,6 +1,7 @@
 // CONFIGURACIÓN DE SUPABASE
 const SUPABASE_URL = "https://xhtiquhbfvzvnntfptrh.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_s3fntuQStrIFj_fZrp6DNQ_Uu94hsYV"; // Debe empezar con eyJhbGci...
+//const SUPABASE_ANON_KEY = "PEGÁ_AQUÍ_TU_LLAVE_ANON_REAL_DE_SUPABASE"; // Debe empezar con eyJhbGci...
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // CONFIGURACIÓN DE CONTACTO (Tu número de WhatsApp)
@@ -13,8 +14,19 @@ const MULTIPLICADORES = {
     1: 1, 2: 1.5, 4: 2.5, 6: 3.5, 10: 4.5, 15: 7, 20: 9, 30: 12, 50: 15, 100: 25, 200: 30
 };
 
+// Función para convertir links de Google Drive a links de imagen directos
+function obtenerUrlDirecta(url) {
+    if (!url || typeof url !== 'string') return url;
+    if (url.includes('drive.google.com')) {
+        const fileId = url.match(/\/d\/([^/]+)/)?.[1] || url.match(/[?&]id=([^&]+)/)?.[1];
+        // Usamos el endpoint uc para visualización directa
+        if (fileId) return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+    return url;
+}
+
 function obtenerPrecioCalculado(chances) {
-    const sorteo = sorteosDisponibles.find(s => s.id === SORTEO_ACTIVO_ID);
+    const sorteo = sorteosDisponibles.find(s => String(s.id) === String(SORTEO_ACTIVO_ID));
     const base = sorteo ? sorteo.precio_base : 5000;
     const mult = MULTIPLICADORES[chances] || chances;
     return base * mult;
@@ -65,7 +77,7 @@ async function cargarInfoPublica() {
         actualizarPreciosUI();
 
         container.innerHTML = sorteos.map(sorteo => {
-        const urls = (sorteo.imagen_url || "").split(/[\n,]+/).map(u => u.trim()).filter(u => u);
+        const urls = (sorteo.imagen_url || "").split(/[\n,]+/).map(u => obtenerUrlDirecta(u.trim())).filter(u => u);
         
         // Cálculo de números disponibles
         const totalNumeros = (sorteo.max_numero - sorteo.min_numero) + 1;
@@ -162,7 +174,7 @@ window.seleccionarYComprar = function(id) {
     comprarSection.classList.remove('hidden');
 
     // Mostrar el título del sorteo seleccionado en la sección de compra
-    const sorteo = sorteosDisponibles.find(s => s.id === id);
+    const sorteo = sorteosDisponibles.find(s => String(s.id) === String(id));
     const labelSorteo = document.getElementById('comprarTituloSorteo');
     if (labelSorteo && sorteo) {
         labelSorteo.querySelector('span').innerText = sorteo.titulo;
@@ -240,7 +252,7 @@ window.cambiarImagenPrincipal = function(url, el) {
     // Efecto de transición suave
     mainImg.style.opacity = '0.5';
     setTimeout(() => {
-        mainImg.src = url;
+        mainImg.src = obtenerUrlDirecta(url);
         mainImg.style.opacity = '1';
     }, 100);
     
@@ -271,6 +283,7 @@ async function actualizarInterfazAuth(user) {
         }
 
         // Consultar rol en la base de datos
+        console.log("Buscando rol para el usuario:", user.id);
         const { data: profile, error } = await supabaseClient
             .from('usuarios')
             .select('role')
@@ -280,8 +293,12 @@ async function actualizarInterfazAuth(user) {
         if (error) {
             console.error("Error de Supabase:", error.message);
         }
+        if (!profile) {
+            console.warn("No se encontró perfil para este ID en la tabla 'usuarios'.");
+        }
         
         currentUserRole = profile?.role || 'user';
+        console.log("Rol detectado:", currentUserRole);
         const isAdmin = currentUserRole.toLowerCase() === 'admin';
 
         authSection.innerHTML = `
@@ -460,7 +477,7 @@ async function subirComprobante(compraId, input) {
 window.abrirImagenModal = function(url) {
     const modal = document.getElementById('imageModal');
     const img = document.getElementById('imgVisualizada');
-    if (img) img.src = url;
+    if (img) img.src = obtenerUrlDirecta(url);
     if (modal) modal.style.display = 'flex';
 }
 
@@ -613,11 +630,14 @@ async function cargarSorteosAdmin() {
     const contenedor = document.getElementById('listaAdminSorteos');
     if (error) return contenedor.innerHTML = `<p class="text-red-500">${error.message}</p>`;
     
+    // Guardamos los datos en cache para evitar errores de sintaxis en el HTML por saltos de línea o comillas
+    window.adminSorteosCache = data;
+
     contenedor.innerHTML = data.map(s => `
         <div class="bg-slate-950 border ${s.activo ? 'border-amber-500/50' : 'border-slate-800'} p-2 rounded-lg flex justify-between items-center">
             <div class="flex items-center gap-3 overflow-hidden">
                 ${s.imagen_url ? 
-                    `<img src="${s.imagen_url.split(/[\n,]+/)[0]}" class="w-10 h-10 object-contain bg-slate-800 rounded">` : 
+                    `<img src="${obtenerUrlDirecta(s.imagen_url.split(/[\n,]+/)[0].trim())}" class="w-10 h-10 object-contain bg-slate-800 rounded">` : 
                     `<div class="w-10 h-10 bg-slate-800 rounded"></div>`}
                 <div class="overflow-hidden">
                     <p class="font-bold text-sm truncate">${s.titulo}</p>
@@ -625,7 +645,7 @@ async function cargarSorteosAdmin() {
                 </div>
             </div>
             <div class="flex gap-2">
-                <button onclick="editarSorteo(${s.id}, '${s.titulo}', '${s.descripcion}', '${s.fecha_sorteo}', ${s.activo}, '${s.imagen_url || ''}', ${s.precio_base || 10000}, ${s.min_numero || 0}, ${s.max_numero || 9999})" class="text-xs text-blue-400 hover:underline">Editar</button>
+                <button onclick="prepararEdicionSorteo('${s.id}')" class="text-xs text-blue-400 hover:underline">Editar</button>
                 <button onclick="borrarSorteo('${s.id}')" class="text-xs text-red-400 hover:underline">Borrar</button>
                 <span class="text-[10px] ${s.activo ? 'text-green-500' : 'text-slate-600'} font-bold">${s.activo ? 'ACTIVO' : 'OFF'}</span>
             </div>
@@ -656,19 +676,23 @@ function prepararNuevoSorteo() {
     document.getElementById('adminFormTitle').innerText = "Nuevo Sorteo";
 }
 
-function editarSorteo(id, titulo, desc, fecha, activo, imagen, precioBase, minNum, maxNum) {
-    document.getElementById('sorteoEditId').value = id;
-    document.getElementById('adminTitulo').value = titulo;
-    document.getElementById('adminDesc').value = desc === 'null' ? '' : desc;
-    document.getElementById('adminImagen').value = imagen === 'null' ? '' : imagen;
-    document.getElementById('adminPrecioBase').value = precioBase || 10000;
-    document.getElementById('adminMinNum').value = minNum || 0;
-    document.getElementById('adminMaxNum').value = maxNum || 9999;
+window.prepararEdicionSorteo = function(id) {
+    const s = (window.adminSorteosCache || []).find(x => String(x.id) === String(id));
+    if (!s) return;
+
+    document.getElementById('sorteoEditId').value = s.id;
+    document.getElementById('adminTitulo').value = s.titulo || '';
+    document.getElementById('adminDesc').value = s.descripcion || '';
+    document.getElementById('adminImagen').value = s.imagen_url || '';
+    document.getElementById('adminPrecioBase').value = s.precio_base || 10000;
+    document.getElementById('adminMinNum').value = s.min_numero || 0;
+    document.getElementById('adminMaxNum').value = s.max_numero || 9999;
+    
     // Ajustar fecha para input datetime-local
-    const d = new Date(fecha);
+    const d = new Date(s.fecha_sorteo);
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     document.getElementById('adminFecha').value = d.toISOString().slice(0, 16);
-    document.getElementById('adminActivo').checked = activo;
+    document.getElementById('adminActivo').checked = s.activo;
     document.getElementById('adminFormTitle').innerText = "Editando Sorteo";
 }
 
@@ -727,7 +751,7 @@ async function cargarGanadores() {
         <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden hover:border-amber-500/50 transition group">
             <div class="aspect-video w-full bg-slate-950 overflow-hidden">
                 ${g.foto_url ? 
-                    `<img src="${g.foto_url}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">` : 
+                    `<img src="${obtenerUrlDirecta(g.foto_url)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">` : 
                     `<div class="w-full h-full flex items-center justify-center text-slate-800 italic text-xs">Foto con el premio</div>`}
             </div>
             <div class="p-6">
@@ -755,7 +779,7 @@ async function cargarGanadoresAdmin() {
     contenedor.innerHTML = data.map(g => `
         <div class="bg-slate-950 border border-slate-800 p-3 rounded-lg flex justify-between items-center">
             <div class="flex items-center gap-3 overflow-hidden">
-                <img src="${g.foto_url || ''}" class="w-12 h-12 object-cover bg-slate-800 rounded" onerror="this.src='https://via.placeholder.com/50'">
+                <img src="${obtenerUrlDirecta(g.foto_url) || ''}" class="w-12 h-12 object-cover bg-slate-800 rounded" onerror="this.src='https://via.placeholder.com/50'">
                 <div class="overflow-hidden">
                     <p class="font-bold text-sm truncate">${g.nombre}</p>
                     <p class="text-[10px] text-amber-500 truncate italic">${g.premio}</p>
