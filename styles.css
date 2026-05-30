@@ -1,0 +1,25 @@
+/* Gradiente dorado personalizado para textos y detalles */
+.text-gold {
+    background: linear-gradient(to right, #f59e0b, #eab308, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.bg-gold {
+    background: linear-gradient(to right, #d97706, #eab308);
+}
+.bg-red-premium {
+    background: linear-gradient(to right, #b91c1c, #ef4444);
+}
+/* Estilo para el scrollbar de las miniaturas internas */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 10px;
+}
+/* Estilo de resaltado para las miniaturas activas */
+.thumb-img.border-amber-500 {
+    border-color: #f59e0b;
+}

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteos Premium | Adquirí tus chances</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-black tracking-wider text-gold">GOLDEN LOOP</h1>
+            <div class="flex items-center gap-4">
+                <div id="authSection">
+                    <button onclick="abrirAuth()" class="text-slate-300 hover:text-white text-sm font-semibold transition">Registrarse / Entrar</button>
+                </div>
+                <a id="btnNavComprar" href="#comprar" class="bg-gold text-slate-950 font-bold px-4 py-2 rounded-lg text-sm hover:opacity-90 transition">
+                    Comprar Chances
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <header id="sorteosActivosContainer" class="max-w-6xl mx-auto px-4 py-8 space-y-24">
+        <!-- Los sorteos se cargarán aquí dinámicamente -->
+        <div class="text-center py-20">
+            <div class="animate-spin inline-block w-10 h-10 border-4 border-gold border-t-transparent rounded-full mb-4"></div>
+            <p class="text-slate-400 font-medium">Cargando sorteos...</p>
+        </div>
+    </header>
+
+    <main id="comprar" class="max-w-6xl mx-auto px-4 py-12 hidden">
+        <h3 id="comprarTituloSorteo" class="text-xl font-bold text-center text-amber-500 mb-2 hidden">Participando por: <span class="text-white"></span></h3>
+        <h3 class="text-2xl font-bold text-center mb-8">Elegí tu Pack de Oportunidades</h3>
+        
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mx-auto">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between hover:border-amber-500/30 transition">
+                <div>
+                    <h4 class="text-xl font-bold">Pack Inicial</h4>
+                    <p class="text-sm text-slate-400 mt-1">Ideal para comenzar</p>
+                    <div class="text-3xl font-black mt-4 text-amber-400">1 Chance</div>
+                </div>
+                <button id="btn-pack-1" onclick="abrirPack(1)" class="w-full mt-6 bg-slate-800 border border-slate-700 hover:border-amber-500 py-3 rounded-xl font-medium transition text-sm text-amber-400">
+                    Elegir por $5.000
+                </button>
+            </div>
+
+            <div class="bg-slate-900 border-2 border-amber-500 rounded-2xl p-6 flex flex-col justify-between relative shadow-xl shadow-amber-500/5">
+                <span class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gold text-slate-950 font-extrabold text-xs px-3 py-1 rounded-full uppercase tracking-wider">
+                    Más Vendido
+                </span>
+                <div>
+                    <h4 class="text-xl font-bold mt-2">Pack Premium</h4>
+                    <p class="text-sm text-slate-400 mt-1">Nuestra mejor oferta</p>
+                    <div class="text-3xl font-black mt-4 text-gold">10 Chances</div>
+                </div>
+                <button id="btn-pack-10" onclick="abrirPack(10)" class="w-full mt-6 bg-gold text-slate-950 py-3 rounded-xl font-bold hover:opacity-90 transition text-sm">
+                    Elegir por $22.500
+                </button>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between hover:border-amber-500/30 transition">
+                <div>
+                    <h4 class="text-xl font-bold">Pack Inversor</h4>
+                    <p class="text-sm text-slate-400 mt-1">Ahorro total</p>
+                    <div class="text-3xl font-black mt-4 text-amber-400">15 Chances</div>
+                </div>
+                <button id="btn-pack-15" onclick="abrirPack(15)" class="w-full mt-6 bg-slate-800 border border-slate-700 hover:border-amber-500 py-3 rounded-xl font-medium transition text-sm text-amber-400">
+                    Elegir por $35.000
+                </button>
+            </div>
+
+            <div onclick="abrirChancesModal()" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-center items-center hover:border-amber-500/30 transition cursor-pointer group text-center">
+                <h4 class="text-xl font-bold group-hover:text-gold transition uppercase tracking-tighter">Otras Cantidades</h4>
+                <p class="text-sm text-slate-400 mt-1 text-balance">Desde 2 hasta 200 chances</p>
+                <div class="text-4xl font-black mt-4 text-amber-400 group-hover:scale-110 transition">+</div>
+                <button class="mt-6 text-amber-500 text-xs font-bold uppercase tracking-widest group-hover:text-white transition">
+                    Ver más chances
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Sección de Ganadores Anteriores -->
+    <section id="seccionGanadores" class="max-w-6xl mx-auto px-4 py-24 border-t border-slate-900">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-5xl font-black mb-4 uppercase tracking-tighter">Ganadores Anteriores</h2>
+            <p class="text-amber-500 font-bold uppercase tracking-widest mb-2">¡Ellos ya ganaron!</p>
+            <p class="text-slate-400">Conocé a los afortunados de sorteos anteriores</p>
+        </div>
+        
+        <div id="contenedorGanadores" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Se carga dinámicamente desde Supabase -->
+        </div>
+    </section>
+
+    <div id="checkoutModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md md:max-w-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">&times;</button>
+            <h3 class="text-xl font-bold mb-2">Finalizar Compra</h3>
+            <p class="text-xs text-amber-500 font-bold uppercase mb-1">Pack de Cursos AutoLoop + Chances para el Triple Sorteo</p>
+            <p id="modalDetalle" class="text-sm text-slate-400 mb-2 font-medium"></p>
+            <div class="border-t border-slate-800 my-4 pt-4">
+                <p class="text-xs text-slate-500 italic mb-4">Es tu primera compra — completá todos los campos.</p>
+            </div>
+
+            <form id="formCompra" class="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-4">
+                <input type="hidden" id="chancesInput">
+                <div class="md:col-span-2">
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">DNI *</label>
+                    <input type="text" id="dni" required placeholder="Ingresá tu DNI para agilizar la carga de datos" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Nombre</label>
+                    <input type="text" id="nombre" placeholder="Tu nombre" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Apellido</label>
+                    <input type="text" id="apellido" placeholder="Tu apellido" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Fecha de nacimiento *</label>
+                    <input type="date" id="fecha_nacimiento" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                    <p class="text-[10px] text-slate-500 mt-1 italic">Debés ser mayor de 18 años para participar.</p>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Email</label>
+                    <input type="email" id="email" placeholder="tu@email.com" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">WhatsApp (Con código de área)</label>
+                    <input type="tel" id="whatsapp" placeholder="5491112345678" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Dirección *</label>
+                    <input type="text" id="direccion" placeholder="Calle y número" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Localidad *</label>
+                    <input type="text" id="localidad" placeholder="Ciudad" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Provincia *</label>
+                    <select id="provincia" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                        <option value="">Seleccionar</option>
+                        <option value="Buenos Aires">Buenos Aires</option>
+                        <option value="CABA">CABA</option>
+                        <option value="Córdoba">Córdoba</option>
+                        <option value="Santa Fe">Santa Fe</option>
+                        <option value="Mendoza">Mendoza</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Código Postal *</label>
+                    <input type="text" id="codigo_postal" placeholder="1234" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 mt-6 md:col-span-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-bold text-slate-400">Total a pagar:</span>
+                        <span id="totalPagarDisplay" class="text-xl font-black text-gold"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-gold text-slate-950 py-3 rounded-xl font-bold hover:opacity-90 transition mt-2 md:col-span-2">
+                    Confirmar Pedido
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="authModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md relative">
+            <button onclick="cerrarAuth()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">&times;</button>
+            <div id="authFormStep">
+            <h3 id="authTitle" class="text-xl font-bold mb-2">Iniciar Sesión</h3>
+            <p id="authDesc" class="text-sm text-slate-400 mb-6">Ingresá a tu cuenta para ver tus chances y sorteos.</p>
+
+            <form id="formAuth" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Email</label>
+                    <input type="email" id="authEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+                <div id="ageField" class="hidden">
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Edad</label>
+                    <input type="number" id="authAge" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Contraseña</label>
+                    <input type="password" id="authPassword" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+                <div id="captchaField" class="hidden">
+                    <label id="captchaQuestion" class="block text-xs text-slate-400 uppercase font-bold mb-1 text-amber-500"></label>
+                    <input type="number" id="authCaptcha" placeholder="Ingresá el resultado" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+
+                <button type="submit" id="btnAuth" class="w-full bg-gold text-slate-950 py-3 rounded-xl font-bold hover:opacity-90 transition mt-2">
+                    Entrar
+                </button>
+            </form>
+
+            <p id="authToggleText" class="text-center text-xs text-slate-500 mt-6">
+                ¿No tenés cuenta? <span class="text-gold cursor-pointer hover:underline" onclick="toggleAuthMode()">Registrate</span>
+            </p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal de Más Opciones de Chances -->
+    <div id="chancesModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
+            <button onclick="cerrarChancesModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">&times;</button>
+            <h3 class="text-xl font-bold mb-4 text-gold">Más Opciones de Participación</h3>
+            
+            <div class="grid grid-cols-1 gap-3">
+                <!-- Opciones dinámicas -->
+                <button onclick="seleccionarExtraPack(2)" class="flex justify-between items-center bg-slate-950 p-4 rounded-xl border border-slate-800 hover:border-amber-500 transition btn-extra" data-chances="2">
+                    <span class="font-bold text-lg">2 Chances</span> <span class="text-amber-500 font-black label-precio">$15.000</span>
+                </button>
+                <button onclick="seleccionarExtraPack(4)" class="flex justify-between items-center bg-slate-950 p-4 rounded-xl border border-slate-800 hover:border-amber-500 transition btn-extra" data-chances="4">
+                    <span class="font-bold text-lg">4 Chances</span> <span class="text-amber-500 font-black label-precio">$25.000</span>
+                </button>
+                <button onclick="seleccionarExtraPack(6)" class="flex justify-between items-center bg-slate-950 p-4 rounded-xl border border-slate-800 hover:border-amber-500 transition btn-extra" data-chances="6">
+                    <span class="font-bold text-lg">6 Chances</span> <span class="text-amber-500 font-black label-precio">$35.000</span>
+                </button>
+                <button onclick="seleccionarExtraPack(20)" class="flex justify-between items-center bg-slate-950 p-4 rounded-xl border border-slate-800 hover:border-amber-500 transition btn-extra" data-chances="20">
+                    <span class="font-bold text-lg">20 Chances</span> <span class="text-amber-500 font-black label-precio">$90.000</span>
+                </button>
+                <button onclick="seleccionarExtraPack(30)" class="flex justify-between items-center bg-slate-950 p-4 rounded-xl border border-slate-800 hover:border-amber-500 transition btn-extra" data-chances="30">
+                    <span class="font-bold text-lg">30 Chances</span> <span class="text-amber-500 font-black label-precio">$120.000</span>
+                </button>
+                <button onclick="seleccionarExtraPack(50)" class="flex justify-between items-center bg-slate-950 p-4 rounded-xl border border-slate-800 hover:border-amber-500 transition btn-extra" data-chances="50">
+                    <span class="font-bold text-lg">50 Chances</span> <span class="text-amber-500 font-black label-precio">$150.000</span>
+                </button>
+                <button onclick="seleccionarExtraPack(100)" class="flex justify-between items-center bg-slate-950 p-4 rounded-xl border border-slate-800 hover:border-amber-500 transition btn-extra" data-chances="100">
+                    <span class="font-bold text-lg">100 Chances</span> <span class="text-amber-500 font-black label-precio">$250.000</span>
+                </button>
+                <button onclick="seleccionarExtraPack(200)" class="flex justify-between items-center bg-amber-500/10 p-4 rounded-xl border border-amber-500 hover:bg-amber-500/20 transition btn-extra" data-chances="200">
+                    <span class="font-bold text-lg text-amber-500">200 Chances</span> <span class="text-amber-500 font-black label-precio">$300.000</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Administración de Sorteos -->
+    <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-6xl relative max-h-[96vh] flex flex-col">
+            <button onclick="cerrarAdmin()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">&times;</button>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <h3 class="text-xl font-bold text-gold">Panel de Administración</h3>
+                <div class="flex gap-2">
+                    <button onclick="cambiarTabAdmin('sorteos')" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Sorteos</button>
+                    <button onclick="cambiarTabAdmin('usuarios')" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Usuarios</button>
+                    <button onclick="cambiarTabAdmin('ventas')" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Ventas</button>
+                    <button onclick="cambiarTabAdmin('ganadores')" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Ganadores</button>
+                    <button onclick="cambiarTabAdmin('ruleta')" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Ruleta</button>
+                    <button id="btnNuevoSorteo" onclick="prepararNuevoSorteo()" class="bg-amber-500 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold hover:bg-amber-400"> + Nuevo Sorteo</button>
+                </div>
+            </div>
+
+            <div id="tabSorteos" class="grid lg:grid-cols-2 gap-6 overflow-hidden">
+                <!-- Formulario -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <h4 id="adminFormTitle" class="text-sm font-bold mb-4 uppercase text-slate-500">Crear/Editar Sorteo</h4>
+                    <form id="formSorteo" class="space-y-3">
+                        <input type="hidden" id="sorteoEditId">
+                        <input type="text" id="adminTitulo" placeholder="Título del Premio (Ej: Hilux V6)" required class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500">
+                        <textarea id="adminDesc" placeholder="Descripción corta" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500 h-20"></textarea>
+                        <input type="number" id="adminPrecioBase" placeholder="Precio base por 1 chance (Ej: 10000)" required class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="number" id="adminMinNum" placeholder="N° Mínimo (0)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500">
+                            <input type="number" id="adminMaxNum" placeholder="N° Máximo (9999)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500">
+                        </div>
+                        <textarea id="adminImagen" placeholder="URLs de las Imágenes (una por línea o separadas por coma)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500 h-24"></textarea>
+                        <input type="datetime-local" id="adminFecha" required class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500">
+                        <label class="flex items-center gap-2 text-sm text-slate-400 cursor-pointer">
+                            <input type="checkbox" id="adminActivo" checked class="accent-amber-500"> Sorteo Activo
+                        </label>
+                        <button type="submit" class="w-full bg-gold text-slate-950 py-3 rounded-xl font-bold text-sm mt-2">Guardar Sorteo</button>
+                    </form>
+                </div>
+                <!-- Lista -->
+                <div id="listaAdminSorteos" class="overflow-y-auto space-y-3 pr-2 custom-scrollbar"></div>
+            </div>
+
+            <!-- Pestaña de Usuarios -->
+            <div id="tabUsuarios" class="hidden overflow-y-auto pr-2 custom-scrollbar space-y-3">
+                <div id="listaAdminUsuarios"></div>
+            </div>
+
+            <!-- Pestaña de Ventas -->
+            <div id="tabVentas" class="hidden overflow-y-auto pr-2 custom-scrollbar space-y-3">
+                <div id="listaAdminVentas"></div>
+            </div>
+
+            <!-- Pestaña de Ganadores -->
+            <div id="tabGanadores" class="hidden overflow-hidden grid lg:grid-cols-2 gap-6">
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <h4 class="text-sm font-bold mb-4 uppercase text-slate-500">Registrar Ganador</h4>
+                    <form id="formGanador" class="space-y-3">
+                        <input type="hidden" id="ganadorEditId">
+                        <input type="text" id="winnerNombre" placeholder="Nombre completo" required class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500">
+                        <input type="text" id="winnerPremio" placeholder="Premio (ej: Honda Tornado 300)" required class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="text" id="winnerLocalidad" placeholder="Localidad/Provincia" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500">
+                            <input type="text" id="winnerFecha" placeholder="Fecha (ej: Mayo 2026)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-amber-500">
+                        </div>
+                        <div class="border-2 border-dashed border-slate-800 rounded-lg p-4 text-center">
+                            <label class="cursor-pointer">
+                                <span class="text-xs text-slate-500 font-bold uppercase block mb-2">Foto con el premio</span>
+                                <input type="file" id="winnerFotoInput" accept="image/*" class="hidden" onchange="previewWinnerImage(this)">
+                                <div id="winnerPhotoPreview" class="text-amber-500 text-xs font-bold hover:underline">Seleccionar archivo</div>
+                            </label>
+                        </div>
+                        <button type="submit" id="btnGuardarGanador" class="w-full bg-gold text-slate-950 py-3 rounded-xl font-bold text-sm mt-2">Guardar Ganador</button>
+                    </form>
+                </div>
+                <div id="listaAdminGanadores" class="overflow-y-auto space-y-3 pr-2 custom-scrollbar"></div>
+            </div>
+
+            <!-- Pestaña de Ruleta -->
+            <div id="tabRuleta" class="hidden flex flex-col items-center py-2 pb-6 overflow-y-auto custom-scrollbar">
+                <div class="w-full max-w-md space-y-2 mb-4">
+                    <label class="block text-xs text-slate-400 uppercase font-bold text-center">Seleccionar Sorteo para el Vivo</label>
+                    <select id="ruletaSorteoSelect" onchange="prepararParticipantesRuleta()" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                        <option value="">Cargando sorteos...</option>
+                    </select>
+                    <div id="ruletaStats" class="text-center text-xs text-slate-500 font-bold uppercase"></div>
+                </div>
+
+                <div class="relative w-full max-w-[350px] aspect-square flex items-center justify-center">
+                    <!-- Marcador de la ruleta -->
+                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[30px] border-t-amber-500 z-10"></div>
+                    
+                    <canvas id="ruletaCanvas" width="800" height="800" class="w-full h-full rounded-full shadow-2xl shadow-amber-500/10 border-4 border-slate-800 bg-slate-900"></canvas>
+                </div>
+
+                <div class="mt-4 space-y-3 text-center">
+                    <button id="btnGirarRuleta" onclick="girarRuleta()" disabled class="bg-gold text-slate-950 px-10 py-3 rounded-xl font-black text-base hover:scale-105 transition disabled:opacity-50 disabled:hover:scale-100">
+                        ¡GIRAR RULETA!
+                    </button>
+                    <div id="resultadoRuleta" class="text-2xl md:text-3xl font-black text-amber-500 min-h-[3rem] mt-2 uppercase tracking-widest text-center px-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Mis Compras -->
+    <div id="purchasesModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-2xl relative max-h-[85vh] flex flex-col">
+            <button onclick="cerrarMisCompras()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">&times;</button>
+            <h3 class="text-xl font-bold mb-4 text-gold">Mis Participaciones</h3>
+            
+            <div id="listaCompras" class="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+                <!-- Aquí se cargarán las compras dinámicamente -->
+                <div class="text-center py-10">
+                    <div class="animate-spin inline-block w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full mb-4"></div>
+                    <p class="text-slate-400">Buscando tus chances...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para visualizar comprobantes -->
+    <div id="imageModal" class="fixed inset-0 bg-black/95 backdrop-blur-sm hidden justify-center items-center p-4 z-[100]">
+        <div class="relative max-w-4xl w-full flex justify-center items-center">
+            <button onclick="cerrarImagenModal()" class="absolute -top-12 right-0 text-white text-4xl hover:text-amber-500 transition">&times;</button>
+            <img id="imgVisualizada" src="" class="max-h-[85vh] max-w-full object-contain rounded-xl shadow-2xl border border-slate-800">
+        </div>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
