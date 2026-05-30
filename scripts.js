@@ -735,8 +735,12 @@ document.getElementById('formSorteo').addEventListener('submit', async (e) => {
 });
 
 // --- LÓGICA DE GANADORES ---
+let listadoGanadoresCompleto = [];
+
 async function cargarGanadores() {
     const container = document.getElementById('contenedorGanadores');
+    const btnContainer = document.getElementById('btnVerTodosGanadoresContainer');
+
     const { data: ganadores, error } = await supabaseClient
         .from('ganadores')
         .select('*')
@@ -744,17 +748,35 @@ async function cargarGanadores() {
 
     if (error || !ganadores || ganadores.length === 0) {
         container.innerHTML = '<p class="text-slate-500 text-center col-span-full py-10">Próximamente publicaremos a nuestros ganadores.</p>';
+        if (btnContainer) btnContainer.classList.add('hidden');
         return;
     }
 
-    container.innerHTML = ganadores.map(g => `
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden hover:border-amber-500/50 transition group">
-            <div class="aspect-video w-full bg-slate-950 overflow-hidden">
+    listadoGanadoresCompleto = ganadores;
+
+    if (ganadores.length > 6) {
+        renderizarGanadores(ganadores.slice(0, 6));
+        if (btnContainer) {
+            btnContainer.classList.remove('hidden');
+            document.getElementById('btnVerMasGanadores')?.classList.remove('hidden');
+            document.getElementById('btnVerMenosGanadores')?.classList.add('hidden');
+        }
+    } else {
+        renderizarGanadores(ganadores);
+        if (btnContainer) btnContainer.classList.add('hidden');
+    }
+}
+
+function renderizarGanadores(lista) {
+    const container = document.getElementById('contenedorGanadores');
+    container.innerHTML = lista.map(g => `
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden hover:border-amber-500/50 transition group flex flex-col h-full">
+            <div class="aspect-[4/5] w-full bg-slate-950 overflow-hidden cursor-pointer shrink-0" onclick="abrirImagenModal('${g.foto_url}')">
                 ${g.foto_url ? 
                     `<img src="${obtenerUrlDirecta(g.foto_url)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">` : 
                     `<div class="w-full h-full flex items-center justify-center text-slate-800 italic text-xs">Foto con el premio</div>`}
             </div>
-            <div class="p-6">
+            <div class="p-6 flex-1 flex flex-col justify-between">
                 <div class="flex justify-between items-start mb-2">
                     <h4 class="font-bold text-xl text-white">${g.nombre}</h4>
                     <span class="text-[10px] bg-amber-500/10 text-amber-500 px-2 py-1 rounded font-black uppercase">${g.fecha || ''}</span>
@@ -769,6 +791,19 @@ async function cargarGanadores() {
             </div>
         </div>
     `).join('');
+}
+
+window.mostrarTodosLosGanadores = function() {
+    renderizarGanadores(listadoGanadoresCompleto);
+    document.getElementById('btnVerMasGanadores')?.classList.add('hidden');
+    document.getElementById('btnVerMenosGanadores')?.classList.remove('hidden');
+}
+
+window.mostrarMenosGanadores = function() {
+    renderizarGanadores(listadoGanadoresCompleto.slice(0, 6));
+    document.getElementById('btnVerMasGanadores')?.classList.remove('hidden');
+    document.getElementById('btnVerMenosGanadores')?.classList.add('hidden');
+    document.getElementById('seccionGanadores')?.scrollIntoView({ behavior: 'smooth' });
 }
 
 async function cargarGanadoresAdmin() {

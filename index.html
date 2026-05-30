@@ -95,12 +95,22 @@
         <div id="contenedorGanadores" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             <!-- Se carga dinámicamente desde Supabase -->
         </div>
+
+        <!-- Botón Ver Todos -->
+        <div id="btnVerTodosGanadoresContainer" class="flex justify-center mt-12 hidden gap-4">
+            <button id="btnVerMasGanadores" onclick="mostrarTodosLosGanadores()" class="bg-gold text-slate-950 font-bold px-8 py-3 rounded-xl hover:opacity-90 transition shadow-lg shadow-gold/10">
+                Ver todos los ganadores
+            </button>
+            <button id="btnVerMenosGanadores" onclick="mostrarMenosGanadores()" class="bg-slate-800 text-slate-300 font-bold px-8 py-3 rounded-xl hover:bg-slate-700 transition hidden">
+                Ver menos
+            </button>
+        </div>
     </section>
 
     <div id="checkoutModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
         <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md md:max-w-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
             <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">&times;</button>
-            <h3 class="text-xl font-bold mb-2">Finalizar Compra</h3>
+            <h3 class="text-2xl font-bold mb-2 text-gold">Finalizar Compra</h3>
             <p id="modalDetalle" class="text-sm text-slate-400 mb-2 font-medium"></p>
             <div class="border-t border-slate-800 my-4 pt-4">
                 <p class="text-xs text-slate-500 italic mb-4">Es tu primera compra — completá todos los campos.</p>
@@ -313,6 +323,7 @@
                                 <span class="text-xs text-slate-500 font-bold uppercase block mb-2">Foto con el premio</span>
                                 <input type="file" id="winnerFotoInput" accept="image/*" class="hidden" onchange="previewWinnerImage(this)">
                                 <div id="winnerPhotoPreview" class="text-amber-500 text-xs font-bold hover:underline">Seleccionar archivo</div>
+                                <div id="winnerPhotoPreview" class="text-amber-500 text-xs font-bold hover:underline flex items-center justify-center min-h-[40px]">Seleccionar archivo</div>
                             </label>
                         </div>
                         <button type="submit" id="btnGuardarGanador" class="w-full bg-gold text-slate-950 py-3 rounded-xl font-bold text-sm mt-2">Guardar Ganador</button>
@@ -365,13 +376,12 @@
     </div>
 
     <!-- Modal para visualizar comprobantes -->
-    <div id="imageModal" class="fixed inset-0 bg-black/95 backdrop-blur-sm hidden justify-center items-center p-4 z-[100]">
-        <div class="relative max-w-4xl w-full flex justify-center items-center">
-            <button onclick="cerrarImagenModal()" class="absolute -top-12 right-0 text-white text-4xl hover:text-amber-500 transition">&times;</button>
-            <img id="imgVisualizada" src="" class="max-h-[85vh] max-w-full object-contain rounded-xl shadow-2xl border border-slate-800">
+    <div id="imageModal" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden overflow-y-auto flex justify-center items-start p-4 md:p-12 z-[100]" onclick="cerrarImagenModal()">
+        <div class="relative w-full max-w-lg md:max-w-2xl mx-auto my-auto" onclick="event.stopPropagation()">
+            <button onclick="cerrarImagenModal()" class="absolute -top-12 right-0 md:-top-0 md:-right-16 text-white text-5xl hover:text-amber-500 transition">&times;</button>
+            <img id="imgVisualizada" src="" class="w-full h-auto block rounded-2xl shadow-2xl border border-slate-700 bg-slate-900">
         </div>
     </div>
-
     <script src="scripts.js"></script>
 </body>
 </html>
