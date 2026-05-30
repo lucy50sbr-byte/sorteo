@@ -1305,7 +1305,7 @@ window.girarRuleta = async function() {
         console.warn("El audio no pudo reproducirse:", e);
     }
 
-    const duracion = 7000; // 7 segundos exactos
+    const duracion = 8500; // 8.5 segundos exactos
     const inicio = performance.now();
     const anguloInicial = ruletaAnguloActual;
     
