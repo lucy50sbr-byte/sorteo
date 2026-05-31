@@ -7,6 +7,9 @@
 .bg-gold {
     background: linear-gradient(to right, #d97706, #eab308);
 }
+.bg-celeste {
+    background: linear-gradient(to right, #0284c7, #38bdf8);
+}
 .bg-red-premium {
     background: linear-gradient(to right, #b91c1c, #ef4444);
 }

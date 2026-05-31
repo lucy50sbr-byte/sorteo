@@ -20,12 +20,94 @@
                 <div id="authSection">
                     <button onclick="abrirAuth()" class="text-slate-300 hover:text-white text-sm font-semibold transition">Registrarse / Entrar</button>
                 </div>
-                <a id="btnNavComprar" href="#comprar" class="bg-gold text-slate-950 font-bold px-4 py-2 rounded-lg text-sm hover:opacity-90 transition">
-                    Comprar Chances
-                </a>
+                <button onclick="irAGanadores(event)" class="bg-celeste text-white font-bold px-4 py-2 rounded-lg text-sm hover:opacity-90 transition">
+                    Ganadores
+                </button>
+                <button id="btnNavSorteos" onclick="irASorteos(event)" class="bg-gold text-slate-950 font-bold px-4 py-2 rounded-lg text-sm hover:opacity-90 transition">
+                    Ver sorteos
+                </button>
             </div>
         </div>
     </nav>
+
+    <!-- Sección Introductoria / Hero -->
+    <section class="max-w-6xl mx-auto px-4 pt-16 pb-8 text-center">
+        <p class="text-gold font-bold uppercase tracking-widest mb-2">GOLDEN LOOP | Cursos Digitales</p>
+        <h1 class="text-4xl md:text-7xl font-black mb-6 tracking-tighter uppercase">¡Participá en nuestro sorteo!</h1>
+        <p class="text-slate-400 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
+            Con cada compra recibís números automáticos para participar en el sorteo. 
+            <span class="text-white font-semibold italic">¡Más compras = más chances de ganar!</span>
+        </p>
+    </section>
+
+    <!-- Cuadrícula de Beneficios -->
+    <section class="max-w-6xl mx-auto px-4 pb-16">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl hover:border-amber-500/30 transition duration-500 group">
+                <div class="text-3xl mb-4 group-hover:scale-110 transition duration-300">🔢</div>
+                <h3 class="font-bold text-xl mb-2 text-white">Números automáticos</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Recibís tus números al instante, en orden y por email.</p>
+            </div>
+
+            <div class="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl hover:border-amber-500/30 transition duration-500 group">
+                <div class="text-3xl mb-4 group-hover:scale-110 transition duration-300">📹</div>
+                <h3 class="font-bold text-xl mb-2 text-white">Sorteo en vivo</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Transmisiones transparentes y seguras para todos nuestros seguidores.</p>
+            </div>
+
+            <div class="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl hover:border-amber-500/30 transition duration-500 group">
+                <div class="text-3xl mb-4 group-hover:scale-110 transition duration-300">⚡</div>
+                <h3 class="font-bold text-xl mb-2 text-white">Aprobación Ágil</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Subís el comprobante y se aprueba para confirmar tus números.</p>
+            </div>
+
+            <div class="bg-slate-900/40 border border-slate-800 p-8 rounded-3xl hover:border-amber-500/30 transition duration-500 group">
+                <div class="text-3xl mb-4 group-hover:scale-110 transition duration-300">📚</div>
+                <h3 class="font-bold text-xl mb-2 text-white">Cursos Digitales</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Acceso inmediato a tus cursos desde el panel de usuario.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección ¿Cómo funciona? -->
+    <section class="max-w-6xl mx-auto px-4 pb-16">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-5xl font-black mb-4 uppercase tracking-tighter">¿Cómo funciona?</h2>
+            <p class="text-slate-400">Participar es muy fácil, seguí estos simples pasos</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="relative p-8 rounded-3xl bg-slate-900/40 border border-slate-800 group hover:border-amber-500/30 transition duration-500">
+                <div class="absolute -top-4 -left-4 w-12 h-12 bg-gold rounded-2xl flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg">1</div>
+                <h3 class="font-bold text-xl mb-3 text-white mt-2">Elegí tus chances</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Seleccioná cuántos números querés para el sorteo. Más chances = más probabilidades de ganar.</p>
+            </div>
+
+            <div class="relative p-8 rounded-3xl bg-slate-900/40 border border-slate-800 group hover:border-amber-500/30 transition duration-500">
+                <div class="absolute -top-4 -left-4 w-12 h-12 bg-gold rounded-2xl flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg">2</div>
+                <h3 class="font-bold text-xl mb-3 text-white mt-2">Realizá el pago</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Completá el checkout y transferí el monto indicado. Subí tu comprobante de pago.</p>
+            </div>
+
+            <div class="relative p-8 rounded-3xl bg-slate-900/40 border border-slate-800 group hover:border-amber-500/30 transition duration-500">
+                <div class="absolute -top-4 -left-4 w-12 h-12 bg-gold rounded-2xl flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg">3</div>
+                <h3 class="font-bold text-xl mb-3 text-white mt-2">Recibí tus números</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Una vez confirmado el pago, se habilitaran tus numeros para el sorteo.</p>
+            </div>
+
+            <div class="relative p-8 rounded-3xl bg-slate-900/40 border border-slate-800 group hover:border-amber-500/30 transition duration-500">
+                <div class="absolute -top-4 -left-4 w-12 h-12 bg-gold rounded-2xl flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg">4</div>
+                <h3 class="font-bold text-xl mb-3 text-white mt-2">¡Participá del sorteo!</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">El día del sorteo se eligen los ganadores en vivo por YouTube. ¡Puede ser tu número!</p>
+            </div>
+        </div>
+
+        <div class="mt-12 bg-amber-500/10 border border-amber-500/20 p-6 rounded-2xl max-w-4xl mx-auto">
+            <p class="text-sm text-slate-300 leading-relaxed text-center">
+                <span class="text-amber-500 font-bold">💡 Importante:</span> Cada paquete que comprás te da una cantidad específica de números para el sorteo. Por ejemplo, si comprás el paquete de 5 chances, recibirás 5 números aleatorios únicos. Los números no son correlativos, se asignan de forma aleatoria para mayor transparencia.
+            </p>
+        </div>
+    </section>
 
     <header id="sorteosActivosContainer" class="max-w-6xl mx-auto px-4 py-8 space-y-24">
         <!-- Los sorteos se cargarán aquí dinámicamente -->
@@ -110,6 +192,56 @@
         </div>
     </section>
 
+    <!-- Footer -->
+    <footer class="bg-slate-900/50 border-t border-slate-800 pt-16 pb-8 mt-12">
+        <div class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+            <!-- Columna 1: Marca e Info -->
+            <div>
+                <h4 class="text-2xl font-black text-gold mb-4 uppercase tracking-tighter italic">GOLDEN LOOP</h4>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    <span class="text-white font-bold">Golden Loop Cursos:</span> Cursos digitales de alta calidad. Con cada compra participas en nuestros sorteos exclusivos.
+                </p>
+                <div class="mt-6 flex items-center gap-2 text-slate-500 text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Acceso sur 2317
+                </div>
+            </div>
+
+            <!-- Columna 2: Enlaces Legales -->
+            <div>
+                <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-6">Información Legal</h4>
+                <ul class="space-y-4">
+                    <li>
+                        <button onclick="abrirTerminos()" class="text-slate-400 hover:text-gold text-sm font-medium transition flex items-center gap-2 group text-left">
+                            <span class="w-1.5 h-1.5 bg-amber-500 rounded-full group-hover:scale-150 transition"></span>
+                            Términos y Condiciones del Sorteo
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Columna 3: Redes Sociales -->
+            <div>
+                <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-6">Nuestras Redes</h4>
+                <div class="flex gap-4">
+                    <a href="#" class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 hover:bg-gold hover:text-slate-950 transition duration-300">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </a>
+                    <a href="#" class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 hover:bg-gold hover:text-slate-950 transition duration-300">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 4-8 4z"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copyright -->
+        <div class="max-w-6xl mx-auto px-4 pt-8 border-t border-slate-800 text-center">
+            <p class="text-slate-500 text-[10px] uppercase font-black tracking-[0.2em]">
+                © 2026 GOLDEN LOOP. Todos los derechos reservados.
+            </p>
+        </div>
+    </footer>
+
     <div id="checkoutModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
         <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md md:max-w-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
             <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">&times;</button>
@@ -151,18 +283,15 @@
                     <input type="text" id="direccion" placeholder="Calle y número" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Localidad *</label>
-                    <input type="text" id="localidad" placeholder="Ciudad" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Provincia *</label>
+                    <select id="provincia" onchange="actualizarLocalidades()" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                        <option value="">Cargando provincias...</option>
+                    </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Provincia *</label>
-                    <select id="provincia" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
-                        <option value="">Seleccionar</option>
-                        <option value="Buenos Aires">Buenos Aires</option>
-                        <option value="CABA">CABA</option>
-                        <option value="Córdoba">Córdoba</option>
-                        <option value="Santa Fe">Santa Fe</option>
-                        <option value="Mendoza">Mendoza</option>
+                    <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Localidad *</label>
+                    <select id="localidad" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                        <option value="">Seleccioná primero la provincia</option>
                     </select>
                 </div>
                 <div>
@@ -195,6 +324,16 @@
                 <div>
                     <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Email</label>
                     <input type="email" id="authEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                </div>
+                <div id="authNameFields" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Nombre(s)</label>
+                        <input type="text" id="authNombre" placeholder="Tu(s) nombre(s)" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Apellido</label>
+                        <input type="text" id="authApellido" placeholder="Tu apellido" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:border-amber-500 outline-none text-white">
+                    </div>
                 </div>
                 <div id="ageField" class="hidden">
                     <label class="block text-xs text-slate-400 uppercase font-bold mb-1">Edad</label>
@@ -385,6 +524,45 @@
             <img id="imgVisualizada" src="" class="w-full h-auto block rounded-2xl shadow-2xl border border-slate-700 bg-slate-900">
         </div>
     </div>
+
+    <!-- Modal de Términos y Condiciones -->
+    <div id="terminosModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden justify-center items-center p-4 z-[60]">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl w-full max-w-4xl relative max-h-[90vh] flex flex-col shadow-2xl">
+            <button onclick="cerrarTerminos()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl transition">&times;</button>
+            <h3 class="text-3xl font-black text-gold mb-6 uppercase tracking-tighter italic">Términos y Condiciones</h3>
+            
+            <div class="overflow-y-auto pr-4 custom-scrollbar text-slate-400 text-sm space-y-4 leading-relaxed">
+                <p><strong class="text-white italic">1. ORGANIZADOR:</strong> El presente sorteo es organizado por <span class="text-gold font-bold">GOLDEN LOOP SRL</span>, con domicilio legal en Acceso sur 2317.</p>
+                
+                <p><strong class="text-white italic">2. ELIGIBILIDAD:</strong> Podrán participar todas aquellas personas físicas mayores de 18 años residentes en el territorio de la República Argentina que cumplan con los requisitos de registro.</p>
+                
+                <p><strong class="text-white italic">3. ASIGNACIÓN DE NÚMEROS:</strong> Los números son asignados de forma correlativa y automática por el sistema una vez que el pago ha sido verificado.</p>
+                
+                <p><strong class="text-white italic">4. SORTEO:</strong> Se realizará de forma pública y en vivo a través de nuestras redes sociales oficiales en la fecha indicada. Se utilizará un sistema de ruleta digital transparente que garantiza la igualdad de oportunidades.</p>
+                
+                <p><strong class="text-white italic">5. PREMIOS:</strong> Los premios consisten en los bienes descritos en la sección "Ver Sorteos". El premio es intransferible y no podrá ser canjeado por su valor en efectivo.</p>
+                
+                <p><strong class="text-white italic">6. ENTREGA DEL PREMIO:</strong> El ganador será contactado vía WhatsApp y Email. Golden Loop se hará cargo de la gestión documental básica, mientras que los costos de traslado y retiro físico del premio corren por cuenta exclusiva del ganador.</p>
+                
+                <p><strong class="text-white italic">7. PRIVACIDAD Y DIFUSIÓN:</strong> Al participar, los ganadores autorizan a Golden Loop a difundir su nombre, localidad e imagen con fines publicitarios en nuestras plataformas oficiales sin derecho a compensación adicional.</p>
+            </div>
+
+            <button onclick="cerrarTerminos()" class="mt-8 w-full bg-gold text-slate-950 font-bold py-3 rounded-xl hover:opacity-90 transition">Entendido, acepto los términos</button>
+        </div>
+    </div>
+
+    <!-- Modal de Alerta Personalizada (Estilo Golden Loop) -->
+    <div id="customAlertModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden justify-center items-center p-4 z-[200]">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl w-full max-w-md relative text-center shadow-2xl scale-95 transition-transform duration-300" id="customAlertContainer">
+            <div id="customAlertIcon" class="text-4xl mb-4">🔔</div>
+            <h3 id="customAlertTitle" class="text-xl font-black text-gold mb-2 uppercase italic tracking-tighter">Atención</h3>
+            <p id="customAlertMessage" class="text-slate-400 text-sm leading-relaxed mb-6"></p>
+            <button onclick="cerrarAlerta()" class="w-full bg-gold text-slate-950 font-bold py-3 rounded-xl hover:opacity-90 transition uppercase tracking-widest text-xs">
+                Aceptar
+            </button>
+        </div>
+    </div>
+
     <script src="scripts.js"></script>
 </body>
 </html>

@@ -10,6 +10,7 @@ const MI_NUMERO_WHATSAPP = "5493518572503";
 // Variable global para el sorteo activo
 let SORTEO_ACTIVO_ID = null;
 let sorteosDisponibles = [];
+let timersMisComprasInterval = null;
 const MULTIPLICADORES = {
     1: 1, 2: 1.5, 4: 2.5, 6: 3.5, 10: 4.5, 15: 7, 20: 9, 30: 12, 50: 15, 100: 25, 200: 30
 };
@@ -76,14 +77,28 @@ async function cargarInfoPublica() {
         SORTEO_ACTIVO_ID = sorteos[0].id;
         actualizarPreciosUI();
 
+        // Obtener recuento de números ocupados para los sorteos activos
+        // Contamos los números que NO pertenecen a compras rechazadas (estado_pago != 2)
+        const { data: vendidosData } = await supabaseClient
+            .from('numeros_asignados')
+            .select('compras!inner(sorteo_id, estado_pago)')
+            .in('compras.sorteo_id', sorteos.map(s => s.id))
+            .neq('compras.estado_pago', 2);
+
+        const vendidosMap = {};
+        if (vendidosData) {
+            vendidosData.forEach(item => {
+                const sId = item.compras.sorteo_id;
+                vendidosMap[sId] = (vendidosMap[sId] || 0) + 1;
+            });
+        }
+
         container.innerHTML = sorteos.map(sorteo => {
         const urls = (sorteo.imagen_url || "").split(/[\n,]+/).map(u => obtenerUrlDirecta(u.trim())).filter(u => u);
         
         // Cálculo de números disponibles
         const totalNumeros = (sorteo.max_numero - sorteo.min_numero) + 1;
-        // Si quitamos el count de la consulta principal, lo ideal es mostrar 
-        // el total por ahora o hacer una consulta aparte para la disponibilidad
-        const vendidos = 0; 
+        const vendidos = vendidosMap[sorteo.id] || 0;
         const disponibles = totalNumeros - vendidos;
         const precioBase = (sorteo.precio_base || 5000).toLocaleString('es-AR');
 
@@ -171,7 +186,14 @@ function actualizarPreciosUI() {
     });
 }
 
-window.seleccionarYComprar = function(id) {
+window.seleccionarYComprar = async function(id) {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+        mostrarAlerta("Debés iniciar sesión o registrarte para participar en el sorteo.", "Acceso Restringido", "🔐");
+        abrirAuth();
+        return;
+    }
+
     SORTEO_ACTIVO_ID = id;
     actualizarPreciosUI();
 
@@ -194,7 +216,25 @@ window.seleccionarYComprar = function(id) {
     
     comprarSection.scrollIntoView({ behavior: 'smooth' });
 }
+
+window.irASorteos = function(e) {
+    if (e) e.preventDefault();
+    const container = document.getElementById('sorteosActivosContainer');
+    if (container) {
+        container.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+window.irAGanadores = function(e) {
+    if (e) e.preventDefault();
+    const container = document.getElementById('seccionGanadores');
+    if (container) {
+        container.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
 cargarInfoPublica();
+cargarProvinciasAPI();
 cargarGanadores();
 
 // Cuenta regresiva dinámica
@@ -356,6 +396,9 @@ async function abrirMisCompras() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return abrirAuth();
 
+    // Limpiamos compras expiradas antes de mostrar para asegurar datos frescos
+    await limpiarVentasExpiradas();
+
     const lista = document.getElementById('listaCompras');
     document.getElementById('purchasesModal').style.display = 'flex';
 
@@ -393,6 +436,20 @@ async function abrirMisCompras() {
         const fecha = new Date(compra.created_at).toLocaleDateString('es-AR');
         const sorteoTitulo = compra.sorteos?.titulo || 'Sorteo';
         const statusVal = Number(compra.estado_pago);
+        const expiraMs = new Date(compra.created_at).getTime() + (2 * 60 * 60 * 1000);
+        const countdownHtml = (statusVal === 0 && !compra.comprobante_url) 
+            ? `
+                <div class="group relative mt-1">
+                    <div class="timer-countdown flex items-center gap-1 text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md w-fit cursor-help" data-expires="${expiraMs}">
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Expira en:</span>
+                        <span class="countdown-val text-[10px] font-black tracking-tighter">--:--:--</span>
+                        <svg class="w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div class="absolute bottom-full left-0 mb-2 hidden group-hover:block w-56 bg-slate-800 text-[10px] text-slate-300 p-2 rounded-lg shadow-xl border border-slate-700 z-20 leading-tight">
+                        Liberamos los números automáticamente tras 2 horas sin comprobante para que otros puedan participar y mantener el sorteo activo.
+                    </div>
+                </div>
+            ` : '';
         const badges = (compra.numeros_asignados && compra.numeros_asignados.length > 0)
             ? compra.numeros_asignados.map(n => `<span class="bg-amber-500/20 text-amber-500 px-2 py-1 rounded text-xs font-mono font-bold">${n.numero_rifa}</span>`).join('')
             : (statusVal === 2 
@@ -431,6 +488,7 @@ async function abrirMisCompras() {
                     <div>
                         <p class="text-xs text-slate-500">${fecha} — ${sorteoTitulo}</p>
                         <h5 class="font-bold text-lg">${compra.cantidad_chances} Chances</h5>
+                        ${countdownHtml}
                     </div>
                     <div class="flex flex-col items-end gap-1">
                         <span class="text-[10px] font-black uppercase px-2 py-1 rounded ${statusColor}">
@@ -445,9 +503,43 @@ async function abrirMisCompras() {
             </div>
         `;
     }).join('');
+
+    iniciarTimersMisCompras();
+}
+
+function iniciarTimersMisCompras() {
+    if (timersMisComprasInterval) clearInterval(timersMisComprasInterval);
+
+    timersMisComprasInterval = setInterval(() => {
+        const timers = document.querySelectorAll('.timer-countdown');
+        if (timers.length === 0) {
+            clearInterval(timersMisComprasInterval);
+            timersMisComprasInterval = null;
+            return;
+        }
+
+        const ahora = Date.now();
+        timers.forEach(timer => {
+            const expira = parseInt(timer.getAttribute('data-expires'));
+            const restante = expira - ahora;
+            const display = timer.querySelector('.countdown-val');
+
+            if (restante <= 0) {
+                display.innerText = "EXPIRADO";
+                timer.classList.replace('text-amber-500', 'text-red-500');
+                timer.classList.replace('bg-amber-500/10', 'bg-red-500/10');
+            } else {
+                const h = Math.floor(restante / (1000 * 60 * 60));
+                const m = Math.floor((restante % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((restante % (1000 * 60)) / 1000);
+                display.innerText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+        });
+    }, 1000);
 }
 
 function cerrarMisCompras() {
+    if (timersMisComprasInterval) clearInterval(timersMisComprasInterval);
     document.getElementById('purchasesModal').style.display = 'none';
 }
 
@@ -511,6 +603,102 @@ window.abrirImagenModal = function(url) {
     }
 }
 
+/** Lógica de Alertas Personalizadas **/
+window.mostrarAlerta = function(mensaje, titulo = "Atención", icono = "🔔") {
+    const modal = document.getElementById('customAlertModal');
+    const container = document.getElementById('customAlertContainer');
+    document.getElementById('customAlertTitle').innerText = titulo;
+    document.getElementById('customAlertMessage').innerText = mensaje;
+    document.getElementById('customAlertIcon').innerText = icono;
+    
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => container.classList.replace('scale-95', 'scale-100'), 10);
+    }
+}
+
+window.cerrarAlerta = function() {
+    const modal = document.getElementById('customAlertModal');
+    const container = document.getElementById('customAlertContainer');
+    if (modal) {
+        container.classList.replace('scale-100', 'scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 200);
+    }
+}
+
+/** Lógica de Términos y Condiciones **/
+window.abrirTerminos = function() {
+    const modal = document.getElementById('terminosModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+window.cerrarTerminos = function() {
+    const modal = document.getElementById('terminosModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+/** Lógica de Provincias y Localidades dinámicas (GeoRef API Argentina) **/
+async function cargarProvinciasAPI() {
+    const provSelect = document.getElementById('provincia');
+    if (!provSelect) return;
+
+    try {
+        const response = await fetch('https://apis.datos.gob.ar/georef/api/provincias?campos=id,nombre');
+        const data = await response.json();
+        const provincias = data.provincias.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+        provSelect.innerHTML = '<option value="">Seleccionar Provincia</option>';
+        provincias.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.id;
+            option.text = p.nombre;
+            provSelect.appendChild(option);
+        });
+    } catch (err) {
+        console.error("Error cargando provincias:", err);
+        provSelect.innerHTML = '<option value="">Error al cargar provincias</option>';
+    }
+}
+
+window.actualizarLocalidades = async function() {
+    const provinciaSelect = document.getElementById('provincia');
+    const localidadSelect = document.getElementById('localidad');
+    const provId = provinciaSelect.value;
+
+    if (!provId) {
+        localidadSelect.innerHTML = '<option value="">Seleccioná primero la provincia</option>';
+        return;
+    }
+
+    localidadSelect.innerHTML = '<option value="">Cargando localidades...</option>';
+
+    try {
+        const response = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?provincia=${provId}&campos=id,nombre&max=1000`);
+        const data = await response.json();
+        const localidades = data.localidades.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+        localidadSelect.innerHTML = '<option value="">Seleccionar Localidad</option>';
+        localidades.forEach(l => {
+            const option = document.createElement('option');
+            option.value = l.nombre;
+            option.text = l.nombre;
+            localidadSelect.appendChild(option);
+        });
+    } catch (err) {
+        console.error("Error cargando localidades:", err);
+        localidadSelect.innerHTML = '<option value="">Error al cargar localidades</option>';
+    }
+}
+
 window.cerrarImagenModal = function() {
     const modal = document.getElementById('imageModal');
     if (modal) {
@@ -535,9 +723,34 @@ function cambiarTabAdmin(tab) {
     else if (tab === 'ruleta') cargarSorteosParaRuleta();
 }
 
+/** Limpieza Automática: Rechaza ventas sin comprobante después de 2 horas **/
+async function limpiarVentasExpiradas() {
+    // Calculamos el tiempo límite: ahora menos 2 horas
+    const limiteExpiracion = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+
+    // 1. Buscamos compras pendientes (0) sin comprobante que superen el tiempo
+    const { data: expiradas } = await supabaseClient
+        .from('compras')
+        .select('id')
+        .eq('estado_pago', 0)
+        .is('comprobante_url', null)
+        .lt('created_at', limiteExpiracion);
+
+    if (expiradas && expiradas.length > 0) {
+        const ids = expiradas.map(v => v.id);
+        // 2. Marcamos como rechazadas (2) y eliminamos los números asignados para liberarlos
+        await supabaseClient.from('compras').update({ estado_pago: 2 }).in('id', ids);
+        await supabaseClient.from('numeros_asignados').delete().in('compra_id', ids);
+        console.log(`Sistema: Se han rechazado ${ids.length} compras expiradas automáticamente.`);
+    }
+}
+
 async function cargarVentasAdmin() {
     const contenedor = document.getElementById('listaAdminVentas');
     contenedor.innerHTML = '<p class="text-center py-4">Cargando ventas...</p>';
+
+    // Ejecutamos la limpieza antes de mostrar la lista al administrador
+    await limpiarVentasExpiradas();
 
     const { data: ventas, error } = await supabaseClient
         .from('compras')
@@ -599,7 +812,7 @@ async function gestionarVenta(compraId, nuevoEstado) {
 
     const { error } = await supabaseClient.from('compras').update(updateData).eq('id', idNum);
     if (error) {
-        alert("Error al actualizar estado: " + error.message);
+        mostrarAlerta("Error al actualizar estado: " + error.message, "Error", "❌");
         return;
     }
 
@@ -607,11 +820,11 @@ async function gestionarVenta(compraId, nuevoEstado) {
     if (nuevoEstado === 2) {
         const { error: delError } = await supabaseClient.from('numeros_asignados').delete().eq('compra_id', idNum);
         if (delError) {
-            alert("Compra rechazada, pero hubo un error liberando los números: " + delError.message);
+            mostrarAlerta("Compra rechazada, pero hubo un error liberando los números: " + delError.message, "Error en liberación", "⚠️");
         }
     }
 
-    alert(`Compra ${accion}da con éxito.`);
+    mostrarAlerta(`Compra ${accion}da con éxito.`, "Gestión de Venta", "✅");
     cargarVentasAdmin();
 }
 function abrirAdmin() {
@@ -656,8 +869,8 @@ async function cambiarRolUsuario(userId, newRole) {
         .update({ role: newRole })
         .eq('id', userId);
     
-    if (error) alert("Error: " + error.message);
-    else alert("Rol actualizado correctamente.");
+    if (error) mostrarAlerta("Error: " + error.message, "Error", "❌");
+    else mostrarAlerta("Rol actualizado correctamente.", "Perfil actualizado", "✅");
 }
 
 function cerrarAdmin() { document.getElementById('adminModal').style.display = 'none'; }
@@ -699,9 +912,9 @@ async function borrarSorteo(id) {
         .eq('id', id);
 
     if (error) {
-        alert("Error al eliminar el sorteo: " + error.message);
+        mostrarAlerta("Error al eliminar el sorteo: " + error.message, "Error", "❌");
     } else {
-        alert("Sorteo eliminado correctamente.");
+        mostrarAlerta("Sorteo eliminado correctamente.", "Sorteo Borrado", "🗑️");
         cargarSorteosAdmin();
         if (id === SORTEO_ACTIVO_ID) location.reload();
     }
@@ -763,9 +976,9 @@ document.getElementById('formSorteo').addEventListener('submit', async (e) => {
         error = err;
     }
 
-    if (error) alert("Error: " + error.message);
+    if (error) mostrarAlerta("Error: " + error.message, "Error", "❌");
     else {
-        alert("Sorteo guardado correctamente.");
+        mostrarAlerta("Sorteo guardado correctamente.", "Sorteo Guardado", "✅");
         prepararNuevoSorteo();
         cargarSorteosAdmin();
         // Si quieres que el sorteo actual de la página cambie si lo editaste:
@@ -928,7 +1141,7 @@ document.getElementById('formGanador').addEventListener('submit', async (e) => {
 
         if (error) throw error;
 
-        alert(id ? "Ganador actualizado." : "Ganador registrado correctamente.");
+        mostrarAlerta(id ? "Ganador actualizado." : "Ganador registrado correctamente.", "Éxito", "✅");
         e.target.reset();
         document.getElementById('ganadorEditId').value = "";
         document.getElementById('btnGuardarGanador').innerText = "Guardar Ganador";
@@ -936,7 +1149,7 @@ document.getElementById('formGanador').addEventListener('submit', async (e) => {
         cargarGanadoresAdmin();
         cargarGanadores();
     } catch (err) {
-        alert("Error: " + err.message);
+        mostrarAlerta("Error: " + err.message, "Error", "❌");
     } finally {
         btn.innerText = "Guardar Ganador";
         btn.disabled = false;
@@ -946,7 +1159,7 @@ document.getElementById('formGanador').addEventListener('submit', async (e) => {
 async function borrarGanador(id) {
     if (!confirm("¿Eliminar este ganador?")) return;
     const { error } = await supabaseClient.from('ganadores').delete().eq('id', id);
-    if (error) alert(error.message);
+    if (error) mostrarAlerta(error.message, "Error", "❌");
     else {
         cargarGanadoresAdmin();
         cargarGanadores();
@@ -980,6 +1193,7 @@ function toggleAuthMode() {
     const btn = document.getElementById('btnAuth');
     const toggle = document.getElementById('authToggleText');
     const ageField = document.getElementById('ageField');
+    const nameFields = document.getElementById('authNameFields');
     const captchaField = document.getElementById('captchaField');
 
     if (isLoginMode) {
@@ -988,6 +1202,7 @@ function toggleAuthMode() {
         btn.innerText = "Entrar";
         toggle.innerHTML = '¿No tenés cuenta? <span class="text-gold cursor-pointer hover:underline" onclick="toggleAuthMode()">Registrate</span>';
         ageField.classList.add('hidden');
+        nameFields.classList.add('hidden');
         captchaField.classList.add('hidden');
     } else {
         title.innerText = "Crear nueva cuenta";
@@ -995,6 +1210,7 @@ function toggleAuthMode() {
         btn.innerText = "Crear Cuenta";
         toggle.innerHTML = '¿Ya tenés cuenta? <span class="text-gold cursor-pointer hover:underline" onclick="toggleAuthMode()">Ingresá</span>';
         ageField.classList.remove('hidden');
+        nameFields.classList.remove('hidden');
         captchaField.classList.remove('hidden');
         generateCaptcha();
     }
@@ -1017,17 +1233,26 @@ document.getElementById('formAuth').addEventListener('submit', async (e) => {
     } else {
         // Validaciones para Registro
         const age = document.getElementById('authAge').value;
+        const nombre = document.getElementById('authNombre').value;
+        const apellido = document.getElementById('authApellido').value;
         const captchaInput = document.getElementById('authCaptcha').value;
 
+        if (!nombre || !apellido) {
+            mostrarAlerta("Por favor, ingresá tu nombre y apellido.", "Campos incompletos", "👤");
+            btn.innerText = "Crear Cuenta";
+            btn.disabled = false;
+            return;
+        }
+
         if (!age || parseInt(age) < 18) {
-            alert("Debes ser mayor de 18 años para participar.");
+            mostrarAlerta("Debes ser mayor de 18 años para participar.", "Edad no permitida", "🔞");
             btn.innerText = "Crear Cuenta";
             btn.disabled = false;
             return;
         }
 
         if (parseInt(captchaInput) !== captchaResult) {
-            alert("Captcha incorrecto. Por favor, resolvé la suma.");
+            mostrarAlerta("Captcha incorrecto. Por favor, resolvé la suma.", "Error de seguridad", "🤖");
             generateCaptcha();
             btn.innerText = "Crear Cuenta";
             btn.disabled = false;
@@ -1044,6 +1269,8 @@ document.getElementById('formAuth').addEventListener('submit', async (e) => {
                 .insert([{
                     id: result.data.user.id,
                     email: email,
+                    nombre: nombre,
+                    apellido: apellido,
                     edad: parseInt(age),
                     role: 'user',
                     password: password
@@ -1058,9 +1285,9 @@ document.getElementById('formAuth').addEventListener('submit', async (e) => {
     btn.disabled = false;
 
     if (error) {
-        alert("Error: " + error.message);
+        mostrarAlerta("Error: " + error.message, "Error", "❌");
     } else {
-        alert(isLoginMode ? "¡Bienvenido!" : "¡Cuenta creada con éxito!");
+        mostrarAlerta(isLoginMode ? "¡Bienvenido!" : "¡Cuenta creada con éxito!", "Autenticación", "✨");
         cerrarAuth();
         document.getElementById('formAuth').reset();
     }
@@ -1079,11 +1306,12 @@ document.getElementById('formCompra').addEventListener('submit', async (e) => {
     const fecha_nacimiento = document.getElementById('fecha_nacimiento').value;
     const direccion = document.getElementById('direccion').value;
     const localidad = document.getElementById('localidad').value;
-    const provincia = document.getElementById('provincia').value;
+    const provinciaElement = document.getElementById('provincia');
+    const provincia = provinciaElement.options[provinciaElement.selectedIndex].text;
     const codigo_postal = document.getElementById('codigo_postal').value;
 
     if (!SORTEO_ACTIVO_ID) {
-        alert("No hay un sorteo activo en este momento.");
+        mostrarAlerta("No hay un sorteo activo en este momento.", "Error", "⚠️");
         return;
     }
 
@@ -1097,7 +1325,7 @@ document.getElementById('formCompra').addEventListener('submit', async (e) => {
     }
     
     if (age < 18) {
-        alert("Debés ser mayor de 18 años para participar del sorteo.");
+        mostrarAlerta("Debés ser mayor de 18 años para participar del sorteo.", "Edad no permitida", "🔞");
         return;
     }
 
@@ -1107,6 +1335,11 @@ document.getElementById('formCompra').addEventListener('submit', async (e) => {
 
     // Obtener el usuario logueado actualmente (si existe)
     const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+        mostrarAlerta("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.", "Sesión expirada", "🔐");
+        abrirAuth();
+        return;
+    }
 
     // 1. Guardar los datos de la compra
     const { data: compra, error } = await supabaseClient
@@ -1133,7 +1366,7 @@ document.getElementById('formCompra').addEventListener('submit', async (e) => {
     if (error) {
         btn.innerText = "Confirmar Pedido";
         btn.disabled = false;
-        alert("Hubo un error procesando tu solicitud: " + error.message);
+        mostrarAlerta("Hubo un error procesando tu solicitud: " + error.message, "Error", "❌");
         return;
     }
 
@@ -1142,7 +1375,7 @@ document.getElementById('formCompra').addEventListener('submit', async (e) => {
         .rpc('asignar_numeros_aleatorios', { p_compra_id: compra.id });
 
     if (rpcError) {
-        alert("Error al asignar números: " + rpcError.message);
+        mostrarAlerta("Error al asignar números: " + rpcError.message, "Error", "❌");
         btn.innerText = "Confirmar Pedido";
         btn.disabled = false;
         return;
@@ -1151,7 +1384,7 @@ document.getElementById('formCompra').addEventListener('submit', async (e) => {
     const listaNumeros = numeros.map(n => n.numero_rifa).join(', ');
 
     // Redirección o aviso para el pago manual
-    alert(`¡Registro Exitoso!\n\nTus números asignados son: ${listaNumeros}\n\nAhora podrás subir tu comprobante en la sección 'Mis Compras' que se abrirá a continuación.`);
+    mostrarAlerta(`¡Registro Exitoso!\n\nTus números asignados son: ${listaNumeros}\n\nAhora podrás subir tu comprobante en la sección 'Mis Compras' para ser aprobado.`, "Pedido Confirmado", "🎉");
     
     // Limpiamos el formulario y cerramos el modal
     btn.innerText = "Confirmar Pedido";
@@ -1161,6 +1394,7 @@ document.getElementById('formCompra').addEventListener('submit', async (e) => {
 
     // Abrimos automáticamente "Mis Compras" para facilitar el proceso de subida de comprobante
     abrirMisCompras();
+    cargarInfoPublica(); // Refrescar la disponibilidad en la página principal
 });
 
 // --- LÓGICA DE LA RULETA ---
@@ -1235,7 +1469,7 @@ async function prepararParticipantesRuleta() {
     participantesRuleta = data.map(item => ({
         numero: item.numero_rifa,
         nombre: `${item.compras.nombre} ${item.compras.apellido}`
-    }));
+    })).sort((a, b) => a.numero - b.numero);
 
     // Generar una paleta de colores única por cada nombre de comprador
     const nombresUnicos = [...new Set(participantesRuleta.map(p => p.nombre))];
